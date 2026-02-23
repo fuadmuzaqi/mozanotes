@@ -14,6 +14,21 @@
     .stabilo-blue { background-color:#2563eb; color:#fff; padding:2px 10px; border-radius:4px; font-weight:800; display:inline-block; }
     .wrap-safe { overflow-wrap: break-word; word-break: break-word; }
     .modal-scroll { max-height: 65vh; overflow-y: auto; }
+
+    /* Clamp helper (5 baris isi) */
+    .clamp-5 {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 5;
+      overflow: hidden;
+    }
+    /* Opsional: judul 1 baris biar rapi */
+    .clamp-1 {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 1;
+      overflow: hidden;
+    }
   </style>
 </head>
 
@@ -91,6 +106,13 @@
             <input type="date" id="input-date" class="w-full bg-transparent font-bold text-lg outline-none">
           </div>
 
+          <div class="bg-slate-50 p-5 rounded-[1.5rem] border border-slate-100">
+            <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Judul</label>
+            <input type="text" id="input-title"
+              class="w-full bg-transparent font-bold text-lg outline-none"
+              placeholder="Judul catatan...">
+          </div>
+
           <div class="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100">
             <label class="block text-[10px] font-black text-slate-400 uppercase mb-4">Isi Catatan</label>
             <textarea id="input-content" rows="10"
@@ -115,6 +137,8 @@
             <button onclick="closeModal()" class="text-slate-400 hover:text-slate-900 font-black text-sm">TUTUP</button>
           </div>
 
+          <div id="modal-title" class="wrap-safe text-xl font-black mb-4"></div>
+
           <div id="modal-content"
                class="modal-scroll wrap-safe text-sm sm:text-base font-[700] text-slate-900 leading-relaxed whitespace-pre-wrap pr-1">
           </div>
@@ -133,11 +157,10 @@
     // =========================
     // AUTO LOGOUT (1 jam)
     // =========================
-    const SESSION_MS = 60 * 60 * 1000; // 1 jam
+    const SESSION_MS = 60 * 60 * 1000;
     let logoutTimer = null;
 
     function scheduleAutoLogout() {
-      // bersihin timer lama
       if (logoutTimer) clearTimeout(logoutTimer);
 
       const startStr = localStorage.getItem('sessionStartAt');
@@ -149,32 +172,24 @@
       const remaining = SESSION_MS - elapsed;
 
       if (remaining <= 0) {
-        // sudah lewat 1 jam
         logout(true);
         return;
       }
 
-      // set auto logout sekali sesuai sisa waktu
-      logoutTimer = setTimeout(() => logout(true), remaining); // setTimeout: sekali setelah delay [web:30]
+      logoutTimer = setTimeout(() => logout(true), remaining);
     }
 
-    // cek saat tab aktif lagi (mis. user tinggalin lama)
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible' && localStorage.getItem('accessCode')) {
         scheduleAutoLogout();
       }
     });
 
-    // =========================
-    // App kamu (asli + sedikit edit)
-    // =========================
-
     // Default date
     document.getElementById('input-date').valueAsDate = new Date();
 
     window.onload = () => {
       if (localStorage.getItem('accessCode')) {
-        // kalau sudah login sebelumnya, cek apakah sudah expired
         scheduleAutoLogout();
         showApp();
       }
@@ -184,12 +199,6 @@
       if (!dateStr) return "";
       const [y, m, d] = dateStr.split('-');
       return `${d}-${m}-${y}`;
-    }
-
-    function clipPreview(text, n = 70) {
-      const t = (text || "").trim();
-      if (t.length <= n) return t;
-      return t.slice(0, n).trim() + "…";
     }
 
     function showView(viewName) {
@@ -221,7 +230,7 @@
       if (!val) return alert("Masukkan kode!");
 
       localStorage.setItem('accessCode', val);
-      localStorage.setItem('sessionStartAt', String(Date.now())); // simpan mulai sesi [web:38]
+      localStorage.setItem('sessionStartAt', String(Date.now()));
       scheduleAutoLogout();
 
       showApp();
@@ -233,19 +242,20 @@
 
       if (logoutTimer) clearTimeout(logoutTimer);
 
-      // optional: kasih info kalau auto logout
       if (auto) alert("Sesi habis (1 jam). Silakan login lagi.");
       location.reload();
     }
 
     function showApp() {
-      document.getElementById('login-screen').classList.add('hidden');
+      // FIX: pakai hidden-view (bukan 'hidden')
+      document.getElementById('login-screen').classList.add('hidden-view');
       document.getElementById('app').classList.remove('hidden-view');
       showView('list');
     }
 
     function resetForm() {
       document.getElementById('note-id').value = '';
+      document.getElementById('input-title').value = '';
       document.getElementById('input-content').value = '';
       document.getElementById('input-date').valueAsDate = new Date();
       document.getElementById('form-title').innerText = "Tambah Catatan";
@@ -260,7 +270,7 @@
         const notes = await apiFetch('/api/notes');
         counter.textContent = `${notes.length} catatan`;
 
-        if (notes.length === 0) {
+        if (notes.length ===  0) {
           container.className = "pt-16";
           container.innerHTML = `<div class="py-20 text-center text-slate-300 font-black uppercase tracking-widest text-xs">Belum ada catatan.</div>`;
           return;
@@ -280,12 +290,17 @@
           badge.textContent = formatDateIndo(n.event_date);
           date.appendChild(badge);
 
-          const preview = document.createElement('div');
-          preview.className = "wrap-safe text-[11px] font-[800] text-slate-900 leading-snug";
-          preview.textContent = clipPreview(n.content, 90);
+          const titleEl = document.createElement('div');
+          titleEl.className = "wrap-safe clamp-1 text-[12px] font-[900] text-slate-900 mb-2";
+          titleEl.textContent = (n.title || "Tanpa Judul");
+
+          const bodyEl = document.createElement('div');
+          bodyEl.className = "wrap-safe clamp-5 text-[11px] font-[700] text-slate-600 leading-snug whitespace-pre-wrap";
+          bodyEl.textContent = (n.content || "").trim();
 
           card.appendChild(date);
-          card.appendChild(preview);
+          card.appendChild(titleEl);
+          card.appendChild(bodyEl);
           container.appendChild(card);
         }
       } catch (err) {
@@ -304,6 +319,8 @@
         modalNote = note;
 
         document.getElementById('modal-date').textContent = formatDateIndo(note.event_date);
+        document.getElementById('modal-title').textContent = note.title || "Tanpa Judul";
+
         const c = document.getElementById('modal-content');
         c.textContent = note.content || "";
 
@@ -322,7 +339,8 @@
       if (!modalNote) return;
       document.getElementById('note-id').value = modalNote.id;
       document.getElementById('input-date').value = modalNote.event_date;
-      document.getElementById('input-content').value = modalNote.content;
+      document.getElementById('input-title').value = modalNote.title || "";
+      document.getElementById('input-content').value = modalNote.content || "";
       document.getElementById('form-title').innerText = "Edit Catatan";
       closeModal();
       showView('form');
@@ -344,9 +362,10 @@
       const btn = document.getElementById('btn-save');
       const id = document.getElementById('note-id').value || "";
       const date = document.getElementById('input-date').value;
+      const title = document.getElementById('input-title').value;
       const content = document.getElementById('input-content').value;
 
-      if (!content || !date) return alert("Isi semuanya dulu ya!");
+      if (!title || !content || !date) return alert("Isi semuanya dulu ya!");
 
       btn.disabled = true;
       btn.innerText = "SEDANG MENYIMPAN...";
@@ -355,7 +374,7 @@
         await apiFetch('/api/notes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: id ? Number(id) : undefined, date, content })
+          body: JSON.stringify({ id: id ? Number(id) : undefined, date, title, content })
         });
         resetForm();
         showView('list');
@@ -367,7 +386,6 @@
       }
     }
 
-    // Close modal if click backdrop
     document.getElementById('modal').addEventListener('click', (e) => {
       if (e.target.id === 'modal') closeModal();
     });
