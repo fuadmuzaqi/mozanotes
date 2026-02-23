@@ -30,7 +30,7 @@ export default async function handler(req, res) {
       const { id } = req.query || {};
       if (id) {
         const r = await client.execute({
-          sql: "SELECT id, event_date, content FROM notes WHERE id = ?",
+          sql: "SELECT id, event_date, title, content FROM notes WHERE id = ?",
           args: [id]
         });
         if (!r.rows || r.rows.length === 0) return json(res, 404, { error: "Catatan tidak ditemukan." });
@@ -38,27 +38,29 @@ export default async function handler(req, res) {
       }
 
       const result = await client.execute(
-        "SELECT id, event_date, content FROM notes ORDER BY event_date DESC, id DESC"
+        "SELECT id, event_date, title, content FROM notes ORDER BY event_date DESC, id DESC"
       );
       return json(res, 200, result.rows || []);
     }
 
-    // POST /api/notes  body: { id?, date, content }
+    // POST /api/notes  body: { id?, date, title, content }
     if (req.method === "POST") {
-      const { id, date, content } = req.body || {};
-      if (!date || !content) return json(res, 400, { error: "Data tidak lengkap (date, content wajib)." });
+      const { id, date, title, content } = req.body || {};
+      if (!date || !title || !content) {
+        return json(res, 400, { error: "Data tidak lengkap (date, title, content wajib)." });
+      }
 
       if (id) {
         await client.execute({
-          sql: "UPDATE notes SET event_date = ?, content = ? WHERE id = ?",
-          args: [date, content, id]
+          sql: "UPDATE notes SET event_date = ?, title = ?, content = ? WHERE id = ?",
+          args: [date, title, content, id]
         });
         return json(res, 200, { message: "Update berhasil" });
       }
 
       await client.execute({
-        sql: "INSERT INTO notes (event_date, content) VALUES (?, ?)",
-        args: [date, content]
+        sql: "INSERT INTO notes (event_date, title, content) VALUES (?, ?, ?)",
+        args: [date, title, content]
       });
       return json(res, 201, { message: "Simpan berhasil" });
     }
