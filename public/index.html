@@ -12,18 +12,8 @@
     .hidden-view { display: none; }
     .glass-nav { background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); }
     .stabilo-blue { background-color:#2563eb; color:#fff; padding:2px 10px; border-radius:4px; font-weight:800; display:inline-block; }
-
-    /* Anti teks keluar kotak (link panjang / string tanpa spasi) */
-    .wrap-safe {
-      overflow-wrap: break-word;
-      word-break: break-word;
-    }
-
-    /* Konten modal bisa scroll */
-    .modal-scroll {
-      max-height: 65vh;
-      overflow-y: auto;
-    }
+    .wrap-safe { overflow-wrap: break-word; word-break: break-word; }
+    .modal-scroll { max-height: 65vh; overflow-y: auto; }
   </style>
 </head>
 
@@ -125,7 +115,6 @@
             <button onclick="closeModal()" class="text-slate-400 hover:text-slate-900 font-black text-sm">TUTUP</button>
           </div>
 
-          <!-- Konten modal: scroll + wrap aman + font lebih kecil -->
           <div id="modal-content"
                class="modal-scroll wrap-safe text-sm sm:text-base font-[700] text-slate-900 leading-relaxed whitespace-pre-wrap pr-1">
           </div>
@@ -141,11 +130,54 @@
   </div>
 
   <script>
+    // =========================
+    // AUTO LOGOUT (1 jam)
+    // =========================
+    const SESSION_MS = 60 * 60 * 1000; // 1 jam
+    let logoutTimer = null;
+
+    function scheduleAutoLogout() {
+      // bersihin timer lama
+      if (logoutTimer) clearTimeout(logoutTimer);
+
+      const startStr = localStorage.getItem('sessionStartAt');
+      const startAt = startStr ? Number(startStr) : Date.now();
+      if (!startStr) localStorage.setItem('sessionStartAt', String(startAt));
+
+      const now = Date.now();
+      const elapsed = now - startAt;
+      const remaining = SESSION_MS - elapsed;
+
+      if (remaining <= 0) {
+        // sudah lewat 1 jam
+        logout(true);
+        return;
+      }
+
+      // set auto logout sekali sesuai sisa waktu
+      logoutTimer = setTimeout(() => logout(true), remaining); // setTimeout: sekali setelah delay [web:30]
+    }
+
+    // cek saat tab aktif lagi (mis. user tinggalin lama)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && localStorage.getItem('accessCode')) {
+        scheduleAutoLogout();
+      }
+    });
+
+    // =========================
+    // App kamu (asli + sedikit edit)
+    // =========================
+
     // Default date
     document.getElementById('input-date').valueAsDate = new Date();
 
     window.onload = () => {
-      if (localStorage.getItem('accessCode')) showApp();
+      if (localStorage.getItem('accessCode')) {
+        // kalau sudah login sebelumnya, cek apakah sudah expired
+        scheduleAutoLogout();
+        showApp();
+      }
     };
 
     function formatDateIndo(dateStr) {
@@ -187,12 +219,22 @@
     function login() {
       const val = document.getElementById('access-input').value;
       if (!val) return alert("Masukkan kode!");
+
       localStorage.setItem('accessCode', val);
+      localStorage.setItem('sessionStartAt', String(Date.now())); // simpan mulai sesi [web:38]
+      scheduleAutoLogout();
+
       showApp();
     }
 
-    function logout() {
+    function logout(auto = false) {
       localStorage.removeItem('accessCode');
+      localStorage.removeItem('sessionStartAt');
+
+      if (logoutTimer) clearTimeout(logoutTimer);
+
+      // optional: kasih info kalau auto logout
+      if (auto) alert("Sesi habis (1 jam). Silakan login lagi.");
       location.reload();
     }
 
@@ -238,7 +280,6 @@
           badge.textContent = formatDateIndo(n.event_date);
           date.appendChild(badge);
 
-          // Preview: kecil + wrap aman (opsional line-clamp)
           const preview = document.createElement('div');
           preview.className = "wrap-safe text-[11px] font-[800] text-slate-900 leading-snug";
           preview.textContent = clipPreview(n.content, 90);
