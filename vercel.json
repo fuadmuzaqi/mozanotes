@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/api/notes", "destination": "/api/notes.js" },
+    { "source": "/(.*)", "destination": "/public/index.html" }
+  ]
+}
