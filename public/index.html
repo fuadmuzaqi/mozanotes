@@ -22,6 +22,20 @@
       -webkit-line-clamp: 5;
       overflow: hidden;
     }
+
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: rgba(37,99,235,0.10);
+      color: #2563eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 150ms ease;
+    }
+    .icon-btn:hover { background: rgba(37,99,235,0.16); }
+    .icon-btn:active { transform: scale(0.98); }
   </style>
 </head>
 
@@ -73,13 +87,11 @@
           <div id="count-notes" class="text-[10px] font-bold text-slate-400 mt-1"></div>
         </div>
 
-        <!-- Refresh diganti icon biru -->
-        <button onclick="fetchNotes()"
-          class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors flex items-center justify-center"
-          title="Refresh">
-          <!-- arrow-path (Heroicons) -->
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M2.985 14.652a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182"/>
+        <!-- Refresh: panah berputar biru -->
+        <button onclick="fetchNotes()" class="icon-btn" title="Refresh">
+          <!-- arrow-path (Heroicons Outline) -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M2.985 14.652a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182" />
           </svg>
         </button>
       </div>
@@ -90,20 +102,35 @@
     <!-- Form -->
     <div id="view-form" class="hidden-view fixed inset-0 bg-white z-[60] overflow-y-auto">
       <div class="max-w-xl mx-auto px-6 py-10">
+
+        <!-- Header form: kiri "Tambah Catatan", kanan icon batal & simpan -->
         <div class="flex justify-between items-center mb-10">
-          <button onclick="showView('list')" class="text-slate-900 font-black text-sm flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-full">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
-            </svg>
-            BATAL
-          </button>
-          <h2 id="form-title" class="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Tambah Catatan</h2>
+          <div id="form-title"
+               class="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+            Tambah Catatan
+          </div>
+
+          <div class="flex items-center gap-2">
+            <!-- Batal (icon biru) -->
+            <button onclick="showView('list')" class="icon-btn" title="Batal">
+              <!-- x-mark (Heroicons Outline) -->
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <!-- Simpan (icon biru) -->
+            <button onclick="saveNote()" id="btn-save-icon" class="icon-btn" title="Simpan">
+              <!-- check (Heroicons Outline) -->
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <div class="space-y-6">
           <input type="hidden" id="note-id">
-
-          <!-- MENU WAKTU DIHILANGKAN: waktu dari sistem -->
 
           <div class="bg-slate-50 p-5 rounded-[1.5rem] border border-slate-100">
             <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Judul</label>
@@ -119,8 +146,9 @@
               placeholder="Tulis catatan..."></textarea>
           </div>
 
+          <!-- Tombol simpan besar tetap ada (agar tidak mengubah flow yang sudah ada), tapi disembunyikan -->
           <button onclick="saveNote()" id="btn-save"
-            class="w-full bg-blue-600 text-white py-6 rounded-[2rem] font-black shadow-xl shadow-blue-100 active:scale-95 transition-all uppercase tracking-widest text-sm">
+            class="hidden w-full bg-blue-600 text-white py-6 rounded-[2rem] font-black shadow-xl shadow-blue-100 active:scale-95 transition-all uppercase tracking-widest text-sm">
             Simpan
           </button>
         </div>
@@ -132,47 +160,32 @@
       <div class="max-w-xl mx-auto px-6 py-10">
         <div class="bg-white rounded-[2.5rem] p-8 shadow-2xl">
 
-          <!-- Header modal: tanggal kecil tanpa stabilo, icon biru kanan -->
           <div class="flex items-center justify-between mb-4">
-            <div id="modal-date"
-                 class="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
-            </div>
+            <div id="modal-date" class="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400"></div>
 
             <div class="flex items-center gap-2">
-              <!-- Tutup -->
-              <button onclick="closeModal()"
-                class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors flex items-center justify-center"
-                title="Tutup">
+              <button onclick="closeModal()" class="icon-btn" title="Tutup">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                 </svg>
               </button>
 
-              <!-- Edit -->
-              <button onclick="startEditFromModal()"
-                class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors flex items-center justify-center"
-                title="Edit">
+              <button onclick="startEditFromModal()" class="icon-btn" title="Edit">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931ZM16.862 4.487 19.5 7.125"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931ZM16.862 4.487 19.5 7.125" />
                 </svg>
               </button>
 
-              <!-- Hapus -->
-              <button onclick="deleteFromModal()"
-                class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors flex items-center justify-center"
-                title="Hapus">
+              <button onclick="deleteFromModal()" class="icon-btn" title="Hapus">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9 14.394 18m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9 14.394 18m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                 </svg>
               </button>
             </div>
           </div>
 
-          <!-- Judul dengan stabilo biru -->
           <div class="mb-5">
-            <span id="modal-title"
-                  class="stabilo-blue text-[14px] tracking-widest">
-            </span>
+            <span id="modal-title" class="stabilo-blue text-[14px] tracking-widest"></span>
           </div>
 
           <div id="modal-content"
@@ -189,7 +202,7 @@
     // =========================
     // AUTO LOGOUT (1 jam)
     // =========================
-    const SESSION_MS = 60 * 60 * 1000; // 1 jam
+    const SESSION_MS = 60 * 60 * 1000;
     let logoutTimer = null;
 
     function scheduleAutoLogout() {
@@ -268,9 +281,7 @@
     function logout(auto = false) {
       localStorage.removeItem('accessCode');
       localStorage.removeItem('sessionStartAt');
-
       if (logoutTimer) clearTimeout(logoutTimer);
-
       if (auto) alert("Sesi habis (1 jam). Silakan login lagi.");
       location.reload();
     }
@@ -285,10 +296,9 @@
       document.getElementById('note-id').value = '';
       document.getElementById('input-title').value = '';
       document.getElementById('input-content').value = '';
-      document.getElementById('form-title').innerText = "Tambah Catatan";
+      document.getElementById('form-title').textContent = "Tambah Catatan";
     }
 
-    // Ambil tanggal sistem (yyyy-mm-dd) untuk API
     function systemDateYYYYMMDD() {
       const d = new Date();
       const y = d.getFullYear();
@@ -319,20 +329,17 @@
           card.className = "text-left bg-white border border-slate-100 rounded-[1.5rem] p-4 shadow-sm hover:shadow-md transition-shadow active:scale-[0.99]";
           card.onclick = () => openModal(n.id);
 
-          // tanggal kecil tanpa stabilo
           const date = document.createElement('div');
           date.className = "text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3";
           date.textContent = formatDateIndo(n.event_date);
 
-          // judul bold + stabilo biru
           const titleWrap = document.createElement('div');
           titleWrap.className = "mb-3";
           const titleBadge = document.createElement('span');
-          titleBadge.className = "stabilo-blue text-[11px] tracking-widest";
+          titleBadge.className = "stabilo-blue text-[11px] tracking-widest font-extrabold";
           titleBadge.textContent = (n.title || "Tanpa Judul");
           titleWrap.appendChild(titleBadge);
 
-          // isi preview 5 baris setelah judul
           const bodyEl = document.createElement('div');
           bodyEl.className = "wrap-safe clamp-5 text-[11px] font-[700] text-slate-700 leading-snug whitespace-pre-wrap";
           bodyEl.textContent = (n.content || "").trim();
@@ -349,7 +356,6 @@
       }
     }
 
-    // Modal state
     let modalNote = null;
 
     async function openModal(id) {
@@ -357,14 +363,9 @@
         const note = await apiFetch(`/api/notes?id=${encodeURIComponent(id)}`);
         modalNote = note;
 
-        // tanggal kecil tanpa stabilo
         document.getElementById('modal-date').textContent = formatDateIndo(note.event_date);
-
-        // judul pakai stabilo biru
         document.getElementById('modal-title').textContent = note.title || "Tanpa Judul";
-
-        const c = document.getElementById('modal-content');
-        c.textContent = note.content || "";
+        document.getElementById('modal-content').textContent = note.content || "";
 
         document.getElementById('modal').classList.remove('hidden-view');
       } catch (err) {
@@ -382,7 +383,7 @@
       document.getElementById('note-id').value = modalNote.id;
       document.getElementById('input-title').value = modalNote.title || "";
       document.getElementById('input-content').value = modalNote.content || "";
-      document.getElementById('form-title').innerText = "Edit Catatan";
+      document.getElementById('form-title').textContent = "Edit Catatan";
       closeModal();
       showView('form');
     }
@@ -400,7 +401,7 @@
     }
 
     async function saveNote() {
-      const btn = document.getElementById('btn-save');
+      const btn = document.getElementById('btn-save-icon');
       const id = document.getElementById('note-id').value || "";
       const title = document.getElementById('input-title').value;
       const content = document.getElementById('input-content').value;
@@ -408,10 +409,8 @@
       if (!title || !content) return alert("Isi semuanya dulu ya!");
 
       btn.disabled = true;
-      btn.innerText = "SEDANG MENYIMPAN...";
 
       try {
-        // WAKTU OTOMATIS DARI SISTEM (untuk insert & update)
         const date = systemDateYYYYMMDD();
 
         await apiFetch('/api/notes', {
@@ -426,11 +425,9 @@
         alert("Gagal menyimpan: " + err.message);
       } finally {
         btn.disabled = false;
-        btn.innerText = "Simpan";
       }
     }
 
-    // Close modal if click backdrop
     document.getElementById('modal').addEventListener('click', (e) => {
       if (e.target.id === 'modal') closeModal();
     });
