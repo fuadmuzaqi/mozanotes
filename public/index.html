@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" />
+  <title>Catatan Saya</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #ffffff; }
+    .hidden-view { display: none; }
+    .glass-nav { background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); }
+    .stabilo-blue { background-color:#2563eb; color:#fff; padding:2px 10px; border-radius:4px; font-weight:800; display:inline-block; }
+  </style>
+</head>
+<body class="antialiased text-slate-900">
+
+  <!-- Login -->
+  <div id="login-screen" class="min-h-screen flex items-center justify-center p-8 bg-slate-50">
+    <div class="w-full max-w-sm text-center bg-white p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/50">
+      <h2 class="text-4xl font-black mb-2 tracking-tighter">Login.</h2>
+      <input type="password" id="access-input"
+        class="w-full bg-slate-100 p-5 rounded-2xl mb-4 text-center text-xl font-bold focus:ring-2 focus:ring-blue-600 outline-none transition-all"
+        placeholder="••••••">
+      <button onclick="login()"
+        class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black active:scale-95 transition-all shadow-lg shadow-blue-200">
+        MASUK
+      </button>
+      <p class="mt-4 text-[10px] font-semibold text-slate-400">Masukkan access code.</p>
+    </div>
+  </div>
+
+  <!-- App -->
+  <div id="app" class="hidden-view">
+
+    <nav class="fixed top-0 left-0 right-0 glass-nav z-50 border-b border-slate-100">
+      <div class="max-w-xl mx-auto px-6 h-20 flex justify-between items-center">
+        <h1 class="text-xl font-black tracking-tighter">CATATAN SAYA.</h1>
+        <div class="flex items-center gap-4">
+          <button onclick="showView('form')"
+            class="w-12 h-12 bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200 active:scale-90 transition-all"
+            title="Tambah">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </button>
+          <button onclick="logout()" class="p-2 text-slate-300 hover:text-red-500 transition-colors" title="Keluar">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- List -->
+    <div id="view-list" class="max-w-xl mx-auto px-6 pt-28 pb-10">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <div class="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Daftar catatan</div>
+          <div id="count-notes" class="text-[10px] font-bold text-slate-400 mt-1"></div>
+        </div>
+        <button onclick="fetchNotes()" class="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600">Refresh</button>
+      </div>
+
+      <div id="notes-container" class="grid grid-cols-2 gap-4"></div>
+    </div>
+
+    <!-- Form -->
+    <div id="view-form" class="hidden-view fixed inset-0 bg-white z-[60] overflow-y-auto">
+      <div class="max-w-xl mx-auto px-6 py-10">
+        <div class="flex justify-between items-center mb-10">
+          <button onclick="showView('list')" class="text-slate-900 font-black text-sm flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-full">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+            </svg>
+            BATAL
+          </button>
+          <h2 id="form-title" class="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Tambah Catatan</h2>
+        </div>
+
+        <div class="space-y-6">
+          <input type="hidden" id="note-id">
+
+          <div class="bg-slate-50 p-5 rounded-[1.5rem] border border-slate-100">
+            <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Waktu</label>
+            <input type="date" id="input-date" class="w-full bg-transparent font-bold text-lg outline-none">
+          </div>
+
+          <div class="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100">
+            <label class="block text-[10px] font-black text-slate-400 uppercase mb-4">Isi Catatan</label>
+            <textarea id="input-content" rows="10"
+              class="w-full bg-transparent text-lg font-semibold outline-none leading-relaxed placeholder:text-slate-300"
+              placeholder="Tulis catatan..."></textarea>
+          </div>
+
+          <button onclick="saveNote()" id="btn-save"
+            class="w-full bg-blue-600 text-white py-6 rounded-[2rem] font-black shadow-xl shadow-blue-100 active:scale-95 transition-all uppercase tracking-widest text-sm">
+            Simpan
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal detail -->
+    <div id="modal" class="hidden-view fixed inset-0 z-[80] bg-black/40">
+      <div class="max-w-xl mx-auto px-6 py-10">
+        <div class="bg-white rounded-[2.5rem] p-8 shadow-2xl">
+          <div class="flex items-center justify-between mb-6">
+            <span id="modal-date" class="stabilo-blue text-[12px] tracking-widest"></span>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-900 font-black text-sm">TUTUP</button>
+          </div>
+          <div id="modal-content" class="text-2xl font-[800] text-slate-900 leading-tight whitespace-pre-wrap"></div>
+          <div class="mt-8 flex gap-3">
+            <button onclick="startEditFromModal()" class="flex-1 bg-slate-100 text-slate-900 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px]">Edit</button>
+            <button onclick="deleteFromModal()" class="flex-1 bg-red-50 text-red-600 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px]">Hapus</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Default date
+    document.getElementById('input-date').valueAsDate = new Date();
+
+    window.onload = () => {
+      if (localStorage.getItem('accessCode')) showApp();
+    };
+
+    function formatDateIndo(dateStr) {
+      if (!dateStr) return "";
+      const [y, m, d] = dateStr.split('-');
+      return `${d}-${m}-${y}`;
+    }
+
+    function clipPreview(text, n = 70) {
+      const t = (text || "").trim();
+      if (t.length <= n) return t;
+      return t.slice(0, n).trim() + "…";
+    }
+
+    function showView(viewName) {
+      if (viewName === 'list') {
+        document.getElementById('view-list').classList.remove('hidden-view');
+        document.getElementById('view-form').classList.add('hidden-view');
+        fetchNotes();
+      } else {
+        document.getElementById('view-list').classList.add('hidden-view');
+        document.getElementById('view-form').classList.remove('hidden-view');
+      }
+    }
+
+    async function apiFetch(url, options = {}) {
+      const res = await fetch(url, {
+        ...options,
+        headers: {
+          ...options.headers,
+          'x-access-code': localStorage.getItem('accessCode')
+        }
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.details || data.error || 'Request gagal');
+      return data;
+    }
+
+    function login() {
+      const val = document.getElementById('access-input').value;
+      if (!val) return alert("Masukkan kode!");
+      localStorage.setItem('accessCode', val);
+      showApp();
+    }
+
+    function logout() {
+      localStorage.removeItem('accessCode');
+      location.reload();
+    }
+
+    function showApp() {
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden-view');
+      showView('list');
+    }
+
+    function resetForm() {
+      document.getElementById('note-id').value = '';
+      document.getElementById('input-content').value = '';
+      document.getElementById('input-date').valueAsDate = new Date();
+      document.getElementById('form-title').innerText = "Tambah Catatan";
+    }
+
+    async function fetchNotes() {
+      const container = document.getElementById('notes-container');
+      const counter = document.getElementById('count-notes');
+      container.innerHTML = "";
+
+      try {
+        const notes = await apiFetch('/api/notes');
+        counter.textContent = `${notes.length} catatan`;
+
+        if (notes.length === 0) {
+          container.className = "pt-16";
+          container.innerHTML = `<div class="py-20 text-center text-slate-300 font-black uppercase tracking-widest text-xs">Belum ada catatan.</div>`;
+          return;
+        }
+
+        container.className = "grid grid-cols-2 gap-4";
+
+        for (const n of notes) {
+          const card = document.createElement('button');
+          card.className = "text-left bg-white border border-slate-100 rounded-[1.5rem] p-4 shadow-sm hover:shadow-md transition-shadow active:scale-[0.99]";
+          card.onclick = () => openModal(n.id);
+
+          const date = document.createElement('div');
+          date.className = "mb-3";
+          const badge = document.createElement('span');
+          badge.className = "stabilo-blue text-[10px] tracking-widest";
+          badge.textContent = formatDateIndo(n.event_date);
+          date.appendChild(badge);
+
+          const preview = document.createElement('div');
+          preview.className = "text-[12px] font-[800] text-slate-900 leading-snug";
+          preview.textContent = clipPreview(n.content, 90);
+
+          card.appendChild(date);
+          card.appendChild(preview);
+          container.appendChild(card);
+        }
+      } catch (err) {
+        counter.textContent = "";
+        container.className = "";
+        container.innerHTML = `<div class="text-red-500 text-[10px] font-bold p-5 bg-red-50 rounded-2xl">ERROR: ${err.message}</div>`;
+      }
+    }
+
+    // Modal state
+    let modalNote = null;
+
+    async function openModal(id) {
+      try {
+        const note = await apiFetch(`/api/notes?id=${encodeURIComponent(id)}`);
+        modalNote = note;
+
+        document.getElementById('modal-date').textContent = formatDateIndo(note.event_date);
+        const c = document.getElementById('modal-content');
+        c.textContent = note.content || "";
+
+        document.getElementById('modal').classList.remove('hidden-view');
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function closeModal() {
+      modalNote = null;
+      document.getElementById('modal').classList.add('hidden-view');
+    }
+
+    function startEditFromModal() {
+      if (!modalNote) return;
+      document.getElementById('note-id').value = modalNote.id;
+      document.getElementById('input-date').value = modalNote.event_date;
+      document.getElementById('input-content').value = modalNote.content;
+      document.getElementById('form-title').innerText = "Edit Catatan";
+      closeModal();
+      showView('form');
+    }
+
+    async function deleteFromModal() {
+      if (!modalNote) return;
+      if (!confirm("Hapus catatan ini?")) return;
+      try {
+        await apiFetch(`/api/notes?id=${encodeURIComponent(modalNote.id)}`, { method: 'DELETE' });
+        closeModal();
+        fetchNotes();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function saveNote() {
+      const btn = document.getElementById('btn-save');
+      const id = document.getElementById('note-id').value || "";
+      const date = document.getElementById('input-date').value;
+      const content = document.getElementById('input-content').value;
+
+      if (!content || !date) return alert("Isi semuanya dulu ya!");
+
+      btn.disabled = true;
+      btn.innerText = "SEDANG MENYIMPAN...";
+
+      try {
+        await apiFetch('/api/notes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: id ? Number(id) : undefined, date, content })
+        });
+        resetForm();
+        showView('list');
+      } catch (err) {
+        alert("Gagal menyimpan: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Simpan";
+      }
+    }
+
+    // Close modal if click backdrop
+    document.getElementById('modal').addEventListener('click', (e) => {
+      if (e.target.id === 'modal') closeModal();
+    });
+  </script>
+</body>
+</html>
