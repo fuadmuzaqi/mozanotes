@@ -15,18 +15,11 @@
     .wrap-safe { overflow-wrap: break-word; word-break: break-word; }
     .modal-scroll { max-height: 65vh; overflow-y: auto; }
 
-    /* Clamp helper (5 baris isi) */
+    /* 5 baris untuk preview isi */
     .clamp-5 {
       display: -webkit-box;
       -webkit-box-orient: vertical;
       -webkit-line-clamp: 5;
-      overflow: hidden;
-    }
-    /* Opsional: judul 1 baris biar rapi */
-    .clamp-1 {
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 1;
       overflow: hidden;
     }
   </style>
@@ -106,6 +99,7 @@
             <input type="date" id="input-date" class="w-full bg-transparent font-bold text-lg outline-none">
           </div>
 
+          <!-- Judul (tambahan) -->
           <div class="bg-slate-50 p-5 rounded-[1.5rem] border border-slate-100">
             <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Judul</label>
             <input type="text" id="input-title"
@@ -137,6 +131,7 @@
             <button onclick="closeModal()" class="text-slate-400 hover:text-slate-900 font-black text-sm">TUTUP</button>
           </div>
 
+          <!-- Judul (tambahan) -->
           <div id="modal-title" class="wrap-safe text-xl font-black mb-4"></div>
 
           <div id="modal-content"
@@ -157,7 +152,7 @@
     // =========================
     // AUTO LOGOUT (1 jam)
     // =========================
-    const SESSION_MS = 60 * 60 * 1000;
+    const SESSION_MS = 60 * 60 * 1000; // 1 jam
     let logoutTimer = null;
 
     function scheduleAutoLogout() {
@@ -199,6 +194,12 @@
       if (!dateStr) return "";
       const [y, m, d] = dateStr.split('-');
       return `${d}-${m}-${y}`;
+    }
+
+    function clipPreview(text, n = 70) {
+      const t = (text || "").trim();
+      if (t.length <= n) return t;
+      return t.slice(0, n).trim() + "…";
     }
 
     function showView(viewName) {
@@ -247,15 +248,14 @@
     }
 
     function showApp() {
-      // FIX: pakai hidden-view (bukan 'hidden')
-      document.getElementById('login-screen').classList.add('hidden-view');
+      document.getElementById('login-screen').classList.add('hidden');
       document.getElementById('app').classList.remove('hidden-view');
       showView('list');
     }
 
     function resetForm() {
       document.getElementById('note-id').value = '';
-      document.getElementById('input-title').value = '';
+      document.getElementById('input-title').value = '';   // tambahan
       document.getElementById('input-content').value = '';
       document.getElementById('input-date').valueAsDate = new Date();
       document.getElementById('form-title').innerText = "Tambah Catatan";
@@ -270,7 +270,7 @@
         const notes = await apiFetch('/api/notes');
         counter.textContent = `${notes.length} catatan`;
 
-        if (notes.length ===  0) {
+        if (notes.length === 0) {
           container.className = "pt-16";
           container.innerHTML = `<div class="py-20 text-center text-slate-300 font-black uppercase tracking-widest text-xs">Belum ada catatan.</div>`;
           return;
@@ -290,12 +290,14 @@
           badge.textContent = formatDateIndo(n.event_date);
           date.appendChild(badge);
 
+          // Judul (baru)
           const titleEl = document.createElement('div');
-          titleEl.className = "wrap-safe clamp-1 text-[12px] font-[900] text-slate-900 mb-2";
+          titleEl.className = "wrap-safe text-[12px] font-[900] text-slate-900 mb-2";
           titleEl.textContent = (n.title || "Tanpa Judul");
 
+          // Isi preview: clamp 5 baris (baru)
           const bodyEl = document.createElement('div');
-          bodyEl.className = "wrap-safe clamp-5 text-[11px] font-[700] text-slate-600 leading-snug whitespace-pre-wrap";
+          bodyEl.className = "wrap-safe clamp-5 text-[11px] font-[800] text-slate-900 leading-snug whitespace-pre-wrap";
           bodyEl.textContent = (n.content || "").trim();
 
           card.appendChild(date);
@@ -319,7 +321,7 @@
         modalNote = note;
 
         document.getElementById('modal-date').textContent = formatDateIndo(note.event_date);
-        document.getElementById('modal-title').textContent = note.title || "Tanpa Judul";
+        document.getElementById('modal-title').textContent = note.title || "Tanpa Judul"; // baru
 
         const c = document.getElementById('modal-content');
         c.textContent = note.content || "";
@@ -339,8 +341,8 @@
       if (!modalNote) return;
       document.getElementById('note-id').value = modalNote.id;
       document.getElementById('input-date').value = modalNote.event_date;
-      document.getElementById('input-title').value = modalNote.title || "";
-      document.getElementById('input-content').value = modalNote.content || "";
+      document.getElementById('input-title').value = modalNote.title || ""; // baru
+      document.getElementById('input-content').value = modalNote.content;
       document.getElementById('form-title').innerText = "Edit Catatan";
       closeModal();
       showView('form');
@@ -362,7 +364,8 @@
       const btn = document.getElementById('btn-save');
       const id = document.getElementById('note-id').value || "";
       const date = document.getElementById('input-date').value;
-      const title = document.getElementById('input-title').value;
+
+      const title = document.getElementById('input-title').value; // baru
       const content = document.getElementById('input-content').value;
 
       if (!title || !content || !date) return alert("Isi semuanya dulu ya!");
@@ -374,7 +377,7 @@
         await apiFetch('/api/notes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: id ? Number(id) : undefined, date, title, content })
+          body: JSON.stringify({ id: id ? Number(id) : undefined, date, title, content }) // baru
         });
         resetForm();
         showView('list');
@@ -386,6 +389,7 @@
       }
     }
 
+    // Close modal if click backdrop
     document.getElementById('modal').addEventListener('click', (e) => {
       if (e.target.id === 'modal') closeModal();
     });
