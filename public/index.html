@@ -49,22 +49,45 @@
       transition: transform 120ms ease;
     }
     .icon-btn-solid:active { transform: scale(0.95); }
+
+    /* Popup merah untuk login error */
+    .login-toast {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      top: 18px;
+      z-index: 9999;
+      max-width: 92vw;
+      width: 420px;
+    }
   </style>
 </head>
 
 <body class="antialiased text-slate-900">
 
+  <!-- Popup merah (awal hidden) -->
+  <div id="login-error" class="login-toast hidden">
+    <div class="bg-red-600 text-white px-5 py-4 rounded-2xl shadow-2xl flex items-center justify-between gap-4">
+      <div class="text-sm font-extrabold uppercase tracking-widest">Kode salah</div>
+      <button onclick="hideLoginError()" class="text-white/80 hover:text-white font-black text-sm">TUTUP</button>
+    </div>
+  </div>
+
   <!-- Login -->
   <div id="login-screen" class="min-h-screen flex items-center justify-center p-8 bg-slate-50">
     <div class="w-full max-w-sm text-center bg-white p-10 rounded-[2.5rem] shadow-xl shadow-slate-200/50">
       <h2 class="text-4xl font-black mb-2 tracking-tighter">Login.</h2>
+
       <input type="password" id="access-input"
         class="w-full bg-slate-100 p-5 rounded-2xl mb-4 text-center text-xl font-bold focus:ring-2 focus:ring-blue-600 outline-none transition-all"
-        placeholder="••••••">
-      <button onclick="login()"
+        placeholder="••••••"
+        onkeydown="if(event.key==='Enter'){ login(); }">
+
+      <button onclick="login()" id="btn-login"
         class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black active:scale-95 transition-all shadow-lg shadow-blue-200">
         MASUK
       </button>
+
       <p class="mt-4 text-[10px] font-semibold text-slate-400">Masukkan access code.</p>
     </div>
   </div>
@@ -76,19 +99,13 @@
       <div class="max-w-xl mx-auto px-6 h-20 flex justify-between items-center">
         <h1 class="text-xl font-black tracking-tighter">CATATAN SAYA.</h1>
         <div class="flex items-center gap-4">
-          <button onclick="showView('form')"
-            class="icon-btn-solid"
-            title="Tambah">
-            <!-- edit/pencil (tetap seperti sebelumnya) -->
+          <button onclick="showView('form')" class="icon-btn-solid" title="Tambah">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
             </svg>
           </button>
 
-          <!-- Logout: samakan warna dengan tombol tambah (biru solid) -->
-          <button onclick="logout()"
-            class="icon-btn-solid"
-            title="Keluar">
+          <button onclick="logout()" class="icon-btn-solid" title="Keluar">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
@@ -105,9 +122,8 @@
           <div id="count-notes" class="text-[10px] font-bold text-slate-400 mt-1"></div>
         </div>
 
-        <!-- Refresh: icon dari Tabler (lebih clean) -->
+        <!-- Refresh: Tabler refresh -->
         <button onclick="fetchNotes()" class="icon-btn" title="Refresh">
-          <!-- Tabler Refresh (stroke=currentColor) -->
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">
@@ -125,7 +141,6 @@
     <div id="view-form" class="hidden-view fixed inset-0 bg-white z-[60] overflow-y-auto">
       <div class="max-w-xl mx-auto px-6 py-10">
 
-        <!-- Header form: kiri "Tambah Catatan", kanan icon batal & simpan -->
         <div class="flex justify-between items-center mb-10">
           <div id="form-title" class="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
             Tambah Catatan
@@ -163,7 +178,6 @@
               placeholder="Tulis catatan..."></textarea>
           </div>
 
-          <!-- tombol lama disembunyikan -->
           <button onclick="saveNote()" id="btn-save"
             class="hidden w-full bg-blue-600 text-white py-6 rounded-[2rem] font-black shadow-xl shadow-blue-100 active:scale-95 transition-all uppercase tracking-widest text-sm">
             Simpan
@@ -284,15 +298,52 @@
       return data;
     }
 
-    function login() {
-      const val = document.getElementById('access-input').value;
+    function showLoginError(msg = "Kode salah") {
+      const el = document.getElementById('login-error');
+      el.querySelector('div > div').textContent = msg;
+      el.classList.remove('hidden');
+      // auto hide setelah 2.2 detik
+      setTimeout(() => hideLoginError(), 2200);
+    }
+
+    function hideLoginError() {
+      document.getElementById('login-error').classList.add('hidden');
+    }
+
+    // Cek kode akses tanpa masuk halaman selanjutnya
+    async function verifyAccessCode(code) {
+      // Panggil endpoint yang sama, cukup GET list.
+      // Jika salah akan 401 dari server.
+      const res = await fetch('/api/notes', { headers: { 'x-access-code': code } });
+      return res.ok; // ok true hanya untuk status 2xx [web:143]
+    }
+
+    async function login() {
+      const input = document.getElementById('access-input');
+      const btn = document.getElementById('btn-login');
+      const val = (input.value || "").trim();
       if (!val) return alert("Masukkan kode!");
 
-      localStorage.setItem('accessCode', val);
-      localStorage.setItem('sessionStartAt', String(Date.now()));
-      scheduleAutoLogout();
+      btn.disabled = true;
+      btn.textContent = "CEK...";
 
-      showApp();
+      try {
+        const ok = await verifyAccessCode(val);
+        if (!ok) {
+          showLoginError("Kode salah");
+          return; // STOP: jangan masuk app
+        }
+
+        localStorage.setItem('accessCode', val);
+        localStorage.setItem('sessionStartAt', String(Date.now()));
+        scheduleAutoLogout();
+        showApp();
+      } catch (e) {
+        showLoginError("Gagal konek");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "MASUK";
+      }
     }
 
     function logout(auto = false) {
